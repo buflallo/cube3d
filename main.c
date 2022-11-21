@@ -11,6 +11,9 @@
 #define arrow_right 65363
 #define map_x 1024
 #define map_y 768
+#define DR PI / 180
+#define P2 PI / 2
+#define P3 3 * PI / 2
 
 float   px, py, pa, pdx, pdy;
 
@@ -36,9 +39,9 @@ typedef struct	s_vars {
 void    initPlayer(t_vars  *vars)
 {
     vars->pl_img.img = NULL;
-    py = map_y / 12 * 1;
-    px = map_x / 16 * 1;
-    pa = PI;
+    py = map_y / 12 * 3;
+    px = map_x / 16 * 1.3;
+    pa = 0;
     pdx = cos(pa) * 20;
     pdy = sin(pa) * 20;
 }
@@ -58,18 +61,22 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
 {
     // draw rays
     int   r,mx,my,mp,dof;
-    float ra, xo = 0,yo;
+    float ra, xo = 0,yo = 0, Tx = 0, Ty = 0, Dist = 0;
     float aTan;
 
-    ra = pa;
-    for (r=0; r<1 ; r++)
+    ra = pa - (30 * DR);
+    if (ra < 0)
+        ra += 2 * PI;
+    if (ra > 2 * PI)
+        ra -= 2 * PI;
+    for (r=0; r<60 ; r++)
     {
         //check horizontal lines
         dof = 0;
         aTan = -1 / tan(ra);
         if (ra > PI) 
         {
-            printf("looking up\n");
+            // looking up
             *ry = (((int)py >> 6) << 6) - 0.0001;
             *rx = (py - *ry) * aTan + px;
             yo = -64;
@@ -77,7 +84,7 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         } 
         if (ra < PI) 
         {
-            printf("looking down\n");
+            // looking down
             *ry = (((int)py >> 6) << 6) + 64;
             *rx = (py - *ry) * aTan + px;
             yo = 64;
@@ -85,7 +92,7 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         } 
         if (ra == 0 || ra == PI) 
         {
-            printf("looking straight\n");
+            // looking straight
             *rx = px;
             *ry = py;
             dof = 12;
@@ -95,12 +102,8 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
             mx = (int)(*rx) >> 6;
             my = (int)(*ry) >> 6;
             mp = my * 16 + mx;
-            printf("mx = %d, my = %d", mx, my);
-            printf("\n");
             if (mp < 192 && abs(my) < 12 && abs(mx) < 16 && vars->map[abs(my)][abs(mx)] == 1) 
-            {
                 dof = 12;
-            } 
             else 
             {
                 *rx += xo;
@@ -108,6 +111,80 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
                 dof += 1;
             }
         }
+        Tx = *rx;
+        Ty = *ry;
+        //check vertical lines
+        dof = 0;
+        aTan = -tan(ra);
+        if (ra > P2 && ra < P3) 
+        {
+            //looking left
+            *rx = (((int)px >> 6) << 6) - 0.0001;
+            *ry = (px - *rx) * aTan + py;
+            xo = -64;
+            yo = -xo * aTan;
+        } 
+        if (ra < P2 || ra > P3) 
+        {
+            // looking right
+            *rx = (((int)px >> 6) << 6) + 64;
+            *ry = (px - *rx) * aTan + py;
+            xo = 64;
+            yo = -xo * aTan;
+        } 
+        if (ra == 0 || ra == PI) 
+        {
+            // looking up or down
+            *rx = px;
+            *ry = py;
+            dof = 12;
+        }
+        while (dof < 16) 
+        {
+            mx = (int)(*rx) >> 6;
+            my = (int)(*ry) >> 6;
+            mp = my * 16 + mx;
+            if (mp < 192 && abs(my) < 12 && abs(mx) < 16 && vars->map[abs(my)][abs(mx)] == 1) 
+                dof = 16;
+            else 
+            {
+                *rx += xo;
+                *ry += yo;
+                dof += 1;
+            }
+        }
+        if (fabs(fabs(py - *ry)/sin(ra)) > fabs(fabs(py - Ty)/sin(ra)))
+        {
+            //take the closet intersection
+            Dist = fabs(fabs(py - Ty)/sin(ra));
+            *ry = Ty;
+            *rx = Tx ;
+        }
+        else
+            Dist = fabs(fabs(py - *ry)/sin(ra));
+        float dx = 0;
+        float i = 0;
+        i = fabs(fabs(py - *ry)/sin(ra));
+        while (dx < i)
+        {
+            my_mlx_pixel_put(&vars->pl_img,  px + dx * cos(ra), py + dx * sin(ra), 0x00000000);
+            dx++;
+        }
+        float   lineH;
+        lineH = (192 * 320) / Dist;
+        if (lineH > 320)
+            lineH = 320;
+        dx = 0;
+        while (dx < lineH)
+        {
+            my_mlx_pixel_put(&vars->pl_img,  r * 16 + map_x, dx, 0x00FF0000);
+            dx++;
+        }
+        ra += DR;
+        if (ra < 0)
+            ra += 2 * PI;
+        if (ra > 2 * PI)
+            ra -= 2 * PI;
     }
 }
 
@@ -116,27 +193,20 @@ void    draw_line(t_vars *vars)
 {
     float rx;
     float ry;
-    float dx = 0;
-    float i = 0;
+    // float dx = 0;
+    // float i = 0;
     draw_rays(vars, &rx, &ry);
     printf("angle %f\n",pa);
-    printf ("rx = %f ry = %f i = %f\n", px - rx, py - ry, fabs(py - ry)/sin(pa));
-    if (pa < PI)
-        i = fabs(py - ry)/sin(pa);
-    else if (i == 0)
-    {
-        i = fabs(py - ry)/sin(pa/2);
-    }
-    if (i > 600)
-    {
-        printf("out of range \n");
-        i = 100;
-    }
-    while (dx < i)
-    {
-        my_mlx_pixel_put(&vars->pl_img,  px + dx * cos(pa), py + dx * sin(pa), 0x00000000);
-        dx++;
-    }
+    // if (pa < PI)
+    //     i = fabs(py - ry)/sin(pa);
+    // else
+    //     i = -fabs(py - ry)/sin(pa);
+    // printf ("rx = %f ry = %f i = %f\n", px - rx, py - ry, fabs(py - ry)/sin(pa));
+    // while (dx < i)
+    // {
+    //     my_mlx_pixel_put(&vars->pl_img,  px + dx * cos(pa), py + dx * sin(pa), 0x00000000);
+    //     dx++;
+    // }
 }
 
 void    drawPlayer(t_vars *vars)
@@ -253,7 +323,7 @@ int    buttons(int keycode, t_vars *vars)
     {
         pa -= 0.1;
         if (pa < 0)
-            pa += PI;
+            pa += PI * 2;
         pdx = cos(pa) * 20;
         pdy = sin(pa) * 20;
     }
@@ -306,7 +376,7 @@ int main(int ac, char *av[])
         y++;
     }
 	vars.mlx = mlx_init();
-    vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Hello world!");
+    vars.win = mlx_new_window(vars.mlx, 1824, map_y, "Hello world!");
     // vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
     // // vars.pl_img.addr = mlx_get_data_addr(vars.pl_img.img, &vars.pl_img.bits_per_pixel, &vars.pl_img.line_length, &vars.pl_img.endian);
     initPlayer(&vars);
