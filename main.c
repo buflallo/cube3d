@@ -5,10 +5,10 @@
 #include <math.h>
 
 #define PI 3.14159265358979323846
-#define arrow_up 126
-#define arrow_down 125
-#define arrow_left 123
-#define arrow_right 124
+#define arrow_up 65362
+#define arrow_down 65364
+#define arrow_left 65363
+#define arrow_right 65361
 #define map_x 1024
 #define map_y 768
 #define DR PI / 180
@@ -69,7 +69,7 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         ra += 2 * PI;
     if (ra > 2 * PI)
         ra -= 2 * PI;
-    for (r=0; r<60 ; r++)
+    for (r=0; r<1020 ; r++)
     {
         //check horizontal lines
         dof = 0;
@@ -163,39 +163,29 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         else
             Dist = fabs(fabs(py - *ry)/sin(ra));
         float dx = 0;
-        float i = 0;
-        i = fabs(fabs(py - *ry)/sin(ra));
-        while (dx < i)
-        {
-            my_mlx_pixel_put(&vars->pl_img,  px + dx * cos(ra), py + dx * sin(ra), 0x00000000);
-            dx++;
-        }
-        dx = 0;
+        float     dy;
         float   lineH;
-        int     dy;
         Dist = Dist * cos(pa - ra);
         lineH = (64 * map_y * tan(30 * DR)) / Dist;
         if (lineH > 443.405006738)
             lineH = 443.405006738;
         dy = 0;
+        float ofsset;
         while (dy < lineH)
         {
-            if (*ry != Ty)
-                my_mlx_pixel_put(&vars->pl_img,  (r * (map_x / 60)) + map_x, map_y - 445.405006738 +  dy , 0x00FF0000);
-            else
-                my_mlx_pixel_put(&vars->pl_img,  (r * (map_x / 60)) + map_x, map_y - 445.405006738 + dy , 0x00CC0000);
             dx = 0;
-            while (dx <= map_x / 60)
+            ofsset = (map_y - 445.405006738 - lineH) / 2;
+            while (dx <= (map_x / 1020))
             {
                 if (*ry != Ty)
-                    my_mlx_pixel_put(&vars->pl_img,  (r * (map_x / 60)) + dx + map_x,  map_y - 445.405006738 + dy, 0x00FF0000);
+                    my_mlx_pixel_put(&vars->pl_img, ((r * (map_x / 1020)) + dx), (map_y - (430.405006738 - ofsset)) + dy, 0x00FF0000);
                 else
-                    my_mlx_pixel_put(&vars->pl_img,  (r * (map_x / 60)) + dx + map_x, map_y - 445.405006738 +  dy, 0x00CC0000);
+                    my_mlx_pixel_put(&vars->pl_img, ((r * (map_x / 1020)) + dx), (map_y - (430.405006738 - ofsset)) + dy, 0x00CC0000);
                 dx++;
             }
             dy++;
         }
-        ra += DR;
+        ra += DR/17;
         if (ra < 0)
             ra += 2 * PI;
         if (ra > 2 * PI)
@@ -226,85 +216,85 @@ void    draw_line(t_vars *vars)
 
 void    drawPlayer(t_vars *vars)
 {
-    int    x;
-    int    y;
+    // int    x;
+    // int    y;
     
 
-    y = 0;
+    // y = 0;
     
     
-    while (y < 20)
-    {
-        x = 0;
-        while (x < 20)
-        {
-            my_mlx_pixel_put(&vars->pl_img, px + x, py + y, 0x00FF0000);
-            x++;
-        }
-        y++;
-    }
+    // while (y < 20)
+    // {
+    //     x = 0;
+    //     while (x < 20)
+    //     {
+    //         my_mlx_pixel_put(&vars->pl_img, px + x, py + y, 0x00FF0000);
+    //         x++;
+    //     }
+    //     y++;
+    // }
     draw_line(vars);
 }
 
 
 void    drawmap(void *mlx, void *win, t_vars *vars)
 {
-    int    x;
-    int    y;
-    int    i;
-    int    j;
-    int    offset[2];
+    // int    x;
+    // int    y;
+    // int    i;
+    // int    j;
+    // int    offset[2];
     
     if (vars->pl_img.img)
     {
         mlx_destroy_image(mlx, vars->pl_img.img);
     }
-    vars->pl_img.img = mlx_new_image(mlx, 2 * map_x, map_y);
+    vars->pl_img.img = mlx_new_image(mlx, map_x, map_y);
     vars->pl_img.addr = mlx_get_data_addr(vars->pl_img.img, &vars->pl_img.bits_per_pixel, &vars->pl_img.line_length, &vars->pl_img.endian);
-    i = 0;
-    offset[1] = 0;
-    while(i < 12)
-    {
-        j = 0;
-        offset[0] = 0;
-        while (j < 16)
-        {
-            y = 0;
-            if (vars->map[i][j] == 1)
-            {
-                while (y < map_y / 12)
-                {
-                    x = 0;
-                    while (x < map_x / 16)
-                    {
-                        my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x0033FFFF);
-                        x++;
-                    }
-                    y++;
-                }
-            }
-            if (vars->map[i][j] == 0)
-            {
-                while (y < map_y / 12)
-                {
-                    x = 0;
-                    while (x < map_x / 16)
-                    {
-                        if (y == 0 || y == map_y / 12 - 1 || x == 0 || x == map_x / 16 - 1)
-                            my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x00000000);
-                        else
-                            my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x00FFFFFF);
-                        x++;
-                    }
-                    y++;
-                }
-            }
-            offset[0] += map_x / 16;
-            j++;
-        }
-        offset[1] += map_y / 12;
-        i++;
-    }
+    // i = 0;
+    // offset[1] = 0;
+    // while(i < 12)
+    // {
+    //     j = 0;
+    //     offset[0] = 0;
+    //     while (j < 16)
+    //     {
+    //         y = 0;
+    //         if (vars->map[i][j] == 1)
+    //         {
+    //             while (y < map_y / 12)
+    //             {
+    //                 x = 0;
+    //                 while (x < map_x / 16)
+    //                 {
+    //                     my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x0033FFFF);
+    //                     x++;
+    //                 }
+    //                 y++;
+    //             }
+    //         }
+    //         if (vars->map[i][j] == 0)
+    //         {
+    //             while (y < map_y / 12)
+    //             {
+    //                 x = 0;
+    //                 while (x < map_x / 16)
+    //                 {
+    //                     if (y == 0 || y == map_y / 12 - 1 || x == 0 || x == map_x / 16 - 1)
+    //                         my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x00000000);
+    //                     else
+    //                         my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x00FFFFFF);
+    //                     x++;
+    //                 }
+    //                 y++;
+    //             }
+    //         }
+    //         offset[0] += map_x / 16;
+    //         j++;
+    //     }
+    //     offset[1] += map_y / 12;
+    //     i++;
+    // }
     drawPlayer(vars);
     mlx_put_image_to_window(mlx, win, vars->pl_img.img, 0, 0);
 }
@@ -330,6 +320,7 @@ int    buttons(int keycode, t_vars *vars)
     // if (keycode == 125 && vars->map[(int)((py / (1080 / 12)) + (20 / (float)(1080 / 12)) )][(int)(px / (1920 / 16))] == 0)
     if (keycode == arrow_up)
     {
+        
         px += pdx;
         py += pdy;
     }
@@ -352,6 +343,12 @@ int    buttons(int keycode, t_vars *vars)
         pdy = sin(pa) * 20;
     }
     drawmap(vars->mlx, vars->win, vars);
+    return (keycode);
+}
+
+int render_next_frame(void *vars)
+{
+    (void)vars;
     return (0);
 }
 
@@ -360,6 +357,7 @@ int main(int ac, char *av[])
     t_vars  vars;
     int    y;
     int    x;
+    // int     c;
 
     (void)ac;
     (void)av;
@@ -391,12 +389,13 @@ int main(int ac, char *av[])
         y++;
     }
 	vars.mlx = mlx_init();
-    vars.win = mlx_new_window(vars.mlx, 2 * map_x, map_y, "Hello world!");
+    vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Hello world!");
     // vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
     // // vars.pl_img.addr = mlx_get_data_addr(vars.pl_img.img, &vars.pl_img.bits_per_pixel, &vars.pl_img.line_length, &vars.pl_img.endian);
     initPlayer(&vars);
     drawmap(vars.mlx, vars.win, &vars);
     // drawPlayer(vars.mlx, vars.win, &vars);
+    // mlx_loop_hook(vars.mlx, render_next_frame(), &vars);
     mlx_key_hook(vars.win, buttons, &vars);
     mlx_loop(vars.mlx);
     return (0);
