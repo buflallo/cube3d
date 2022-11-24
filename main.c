@@ -5,17 +5,15 @@
 #include <math.h>
 
 #define PI 3.14159265358979323846
-#define arrow_up 65362
-#define arrow_down 65364
-#define arrow_left 65363
-#define arrow_right 65361
+#define arrow_up 126
+#define arrow_down 125
+#define arrow_left 123
+#define arrow_right 124
 #define map_x 1024
 #define map_y 768
 #define DR PI / 180
 #define P2 PI / 2
 #define P3 3 * PI / 2
-
-float   px, py, pa, pdx, pdy;
 
 typedef struct	s_data {
 	void	*img;
@@ -25,6 +23,18 @@ typedef struct	s_data {
 	int		endian;
 }				t_data;
 
+typedef struct	s_player {
+	int	    up;
+	int		down;
+	int		left;
+	int		right;
+    float   px;
+    float   py;
+    float   pa;
+    float   pdx;
+    float   pdy;
+}				t_player;
+
 typedef struct	s_vars {
     void	*mlx;
     void	*win;
@@ -33,17 +43,18 @@ typedef struct	s_vars {
     int     p_x;
     int     p_y;
     int     map[12][16];
+    t_player    player;
 }				t_vars;
 
 
 void    initPlayer(t_vars  *vars)
 {
     vars->pl_img.img = NULL;
-    py = map_y / 12 * 3;
-    px = map_x / 16 * 1.3;
-    pa = 0;
-    pdx = cos(pa) * 20;
-    pdy = sin(pa) * 20;
+    vars->player.py = 64 * 5;
+    vars->player.px = 64 * 2.5;
+    vars->player.pa = P3;
+    vars->player.pdx = cos(vars->player.pa) * 3;
+    vars->player.pdy = sin(vars->player.pa) * 3;
 }
 
 void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
@@ -64,7 +75,7 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
     float ra, xo = 0,yo = 0, Tx = 0, Ty = 0, Dist = 0;
     float aTan;
 
-    ra = pa - (30 * DR);
+    ra = vars->player.pa - (30 * DR);
     if (ra < 0)
         ra += 2 * PI;
     if (ra > 2 * PI)
@@ -77,24 +88,24 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         if (ra > PI) 
         {
             // looking up
-            *ry = (((int)py >> 6) << 6) - 0.0001;
-            *rx = (py - *ry) * aTan + px;
+            *ry = (((int)vars->player.py >> 6) << 6) - 0.0001;
+            *rx = (vars->player.py - *ry) * aTan + vars->player.px;
             yo = -64;
             xo = -yo * aTan;
         } 
         if (ra < PI) 
         {
             // looking down
-            *ry = (((int)py >> 6) << 6) + 64;
-            *rx = (py - *ry) * aTan + px;
+            *ry = (((int)vars->player.py >> 6) << 6) + 64;
+            *rx = (vars->player.py - *ry) * aTan + vars->player.px;
             yo = 64;
             xo = -yo * aTan;
         } 
         if (ra == 0 || ra == PI) 
         {
             // looking straight
-            *rx = px;
-            *ry = py;
+            *rx = vars->player.px;
+            *ry = vars->player.py;
             dof = 12;
         }
         while (dof < 12) 
@@ -119,24 +130,24 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         if (ra > P2 && ra < P3) 
         {
             //looking left
-            *rx = (((int)px >> 6) << 6) - 0.0001;
-            *ry = (px - *rx) * aTan + py;
+            *rx = (((int)vars->player.px >> 6) << 6) - 0.0001;
+            *ry = (vars->player.px - *rx) * aTan + vars->player.py;
             xo = -64;
             yo = -xo * aTan;
         } 
         if (ra < P2 || ra > P3) 
         {
             // looking right
-            *rx = (((int)px >> 6) << 6) + 64;
-            *ry = (px - *rx) * aTan + py;
+            *rx = (((int)vars->player.px >> 6) << 6) + 64;
+            *ry = (vars->player.px - *rx) * aTan + vars->player.py;
             xo = 64;
             yo = -xo * aTan;
         } 
         if (ra == 0 || ra == PI) 
         {
             // looking up or down
-            *rx = px;
-            *ry = py;
+            *rx = vars->player.px;
+            *ry = vars->player.py;
             dof = 12;
         }
         while (dof < 16) 
@@ -153,36 +164,33 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
                 dof += 1;
             }
         }
-        if (fabs(fabs(py - *ry)/sin(ra)) > fabs(fabs(py - Ty)/sin(ra)))
+        if (fabs(fabs(vars->player.py - *ry)/sin(ra)) > fabs(fabs(vars->player.py - Ty)/sin(ra)))
         {
             //take the closet intersection
-            Dist = fabs(fabs(py - Ty)/sin(ra));
+            Dist = fabs(fabs(vars->player.py - Ty)/sin(ra));
             *ry = Ty;
             *rx = Tx ;
         }
         else
-            Dist = fabs(fabs(py - *ry)/sin(ra));
+            Dist = fabs(fabs(vars->player.py - *ry)/sin(ra));
         float dx = 0;
         float     dy;
         float   lineH;
-        Dist = Dist * cos(pa - ra);
+        Dist = Dist * cos(vars->player.pa - ra);
         lineH = (64 * map_y * tan(30 * DR)) / Dist;
-        if (lineH > 443.405006738)
-            lineH = 443.405006738;
+        if (lineH > map_y)
+            lineH = map_y;
         dy = 0;
         float ofsset;
         while (dy < lineH)
         {
             dx = 0;
-            ofsset = (map_y - 445.405006738 - lineH) / 2;
-            while (dx <= (map_x / 1020))
-            {
+            ofsset = (map_y - lineH) / 2;
+            // (map_y - ofsset)
                 if (*ry != Ty)
-                    my_mlx_pixel_put(&vars->pl_img, ((r * (map_x / 1020)) + dx), (map_y - (430.405006738 - ofsset)) + dy, 0x00FF0000);
+                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0x00FF0000);
                 else
-                    my_mlx_pixel_put(&vars->pl_img, ((r * (map_x / 1020)) + dx), (map_y - (430.405006738 - ofsset)) + dy, 0x00CC0000);
-                dx++;
-            }
+                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0x00CC0000);
             dy++;
         }
         ra += DR/17;
@@ -201,7 +209,7 @@ void    draw_line(t_vars *vars)
     // float dx = 0;
     // float i = 0;
     draw_rays(vars, &rx, &ry);
-    printf("angle %f\n",pa);
+    printf("angle %f\n",vars->player.pa);
     // if (pa < PI)
     //     i = fabs(py - ry)/sin(pa);
     // else
@@ -308,48 +316,114 @@ void    ft_swap(int *a, int *b)
     *b = tmp;
 }
 
-int    buttons(int keycode, t_vars *vars)
+int    key_pressed(int keycode, t_vars *vars)
 {
-    printf("keycode = %d\n", keycode);
-    // if (keycode == 126 && vars->map[(int)((py / (1080 / 12)) - (20 / (float)(1080 / 12)) )][(int)(px / (1920 / 16))] == 0)
+    if (keycode == arrow_down && vars->map[(int)((vars->player.py / (768 / 12)) - (20 / (float)(768 / 12)) )][(int)(vars->player.px / (1024 / 16))] == 0)
+    {
+        vars->player.down = 1;
+    }
+    if (keycode == arrow_up && vars->map[(int)((vars->player.py / (768 / 12)) - (20 / (float)(768 / 12)) )][(int)(vars->player.px / (1024 / 16))] == 0)
+    {
+        vars->player.up = 1;
+    }
+    if (keycode == arrow_left)
+    {
+        vars->player.left = 1;
+    }
+    if (keycode == arrow_right)
+    {
+        vars->player.right = 1;
+    }
+    return (keycode);
+}
+
+int key_release(int keycode, t_vars *vars)
+{
+    // if (keycode == 126 && vars->map[(int)((py / (768 / 12)) - (20 / (float)(768 / 12)) )][(int)(px / (1024 / 16))] == 0)
     if (keycode == arrow_down)
     {
-        px -= pdx;
-        py -= pdy;
+        vars->player.down = 0;
     }
     // if (keycode == 125 && vars->map[(int)((py / (1080 / 12)) + (20 / (float)(1080 / 12)) )][(int)(px / (1920 / 16))] == 0)
     if (keycode == arrow_up)
     {
-        
-        px += pdx;
-        py += pdy;
+        vars->player.up = 0;
     }
     // if (keycode == 123 && vars->map[(int)(py / (1080 / 12))][(int)((px / (1920 / 16)) - (20 / (float)(1920 / 16)))] == 0)
     if (keycode == arrow_left)
     {
-        pa -= 0.1;
-        if (pa < 0)
-            pa += PI * 2;
-        pdx = cos(pa) * 20;
-        pdy = sin(pa) * 20;
+        vars->player.left = 0;
     }
     // if (keycode == 124 && vars->map[(int)(py / (1080 / 12))][(int)((px / (1920 / 16)) + (20 / (float)(1920 / 16)))] == 0)
     if (keycode == arrow_right)
     {
-        pa += 0.1;
-        if (pa > 2 * PI)
-            pa -= 2 * PI;
-        pdx = cos(pa) * 20;
-        pdy = sin(pa) * 20;
+        vars->player.right = 0;
     }
-    drawmap(vars->mlx, vars->win, vars);
     return (keycode);
 }
 
-int render_next_frame(void *vars)
+void    move(t_vars *vars)
 {
+    int xo, yo;
+    xo = 0;
+    yo = 0;
+    if (vars->player.pdx < 0)
+        xo = -20;
+    else
+        xo = 20;
+    if (vars->player.pdy < 0)
+        yo = -20;
+    else
+        yo = 20;
+    if (vars->player.down)
+    {
+        if (vars->map[(int)(vars->player.py - yo) / 64][(int)vars->player.px / 64] == 0)
+            vars->player.py -= vars->player.pdy;
+        if (vars->map[(int)vars->player.py / 64][(int)(vars->player.px - xo) / 64] == 0)
+            vars->player.px -= vars->player.pdx;
+    }
+    // if (keycode == 125 && vars->map[(int)((py / (1080 / 12)) + (20 / (float)(1080 / 12)) )][(int)(px / (1920 / 16))] == 0)
+    if (vars->player.up)
+    {
+        if (vars->map[(int)(vars->player.py + yo) / 64][(int)vars->player.px / 64] == 0)
+            vars->player.py += vars->player.pdy;
+        if (vars->map[(int)vars->player.py / 64][(int)(vars->player.px + xo) / 64] == 0)
+            vars->player.px += vars->player.pdx;
+    }
+    // if (keycode == 123 && vars->map[(int)(py / (1080 / 12))][(int)((px / (1920 / 16)) - (20 / (float)(1920 / 16)))] == 0)
+    if (vars->player.left)
+    {
+        vars->player.pa -= 0.05;
+        if (vars->player.pa < 0)
+            vars->player.pa += PI * 2;
+        vars->player.pdx = cos(vars->player.pa) * 3;
+        vars->player.pdy = sin(vars->player.pa) * 3;
+    }
+    // if (keycode == 124 && vars->map[(int)(py / (1080 / 12))][(int)((px / (1920 / 16)) + (20 / (float)(1920 / 16)))] == 0)
+    if (vars->player.right)
+    {
+        vars->player.pa += 0.05;
+        if (vars->player.pa > 2 * PI)
+            vars->player.pa -= 2 * PI;
+        vars->player.pdx = cos(vars->player.pa) * 3;
+        vars->player.pdy = sin(vars->player.pa) * 3;
+    }
     (void)vars;
+}
+
+int render_next_frame(t_vars *vars)
+{
+    drawmap(vars->mlx, vars->win, vars);
     return (0);
+}
+
+int update(t_vars *vars)
+{
+    mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
+	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
+    move(vars);
+    render_next_frame(vars);
+    return (1);
 }
 
 int main(int ac, char *av[])
@@ -396,7 +470,8 @@ int main(int ac, char *av[])
     drawmap(vars.mlx, vars.win, &vars);
     // drawPlayer(vars.mlx, vars.win, &vars);
     // mlx_loop_hook(vars.mlx, render_next_frame(), &vars);
-    mlx_key_hook(vars.win, buttons, &vars);
+   
+    mlx_loop_hook(vars.mlx, update, &vars);
     mlx_loop(vars.mlx);
     return (0);
 }
