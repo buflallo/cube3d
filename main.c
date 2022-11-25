@@ -35,6 +35,16 @@ typedef struct	s_player {
     float   pdy;
 }				t_player;
 
+typedef struct s_texture
+{
+    char	*file;
+    t_data  tex_img;
+	int		*dir;
+	int		img_width;
+	int		img_height;
+}   t_texture;
+
+
 typedef struct	s_vars {
     void	*mlx;
     void	*win;
@@ -43,6 +53,7 @@ typedef struct	s_vars {
     int     p_x;
     int     p_y;
     int     map[12][16];
+    t_texture   textures[4];
     t_player    player;
 }				t_vars;
 
@@ -173,7 +184,6 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
         }
         else
             Dist = fabs(fabs(vars->player.py - *ry)/sin(ra));
-        float dx = 0;
         float     dy;
         float   lineH;
         Dist = Dist * cos(vars->player.pa - ra);
@@ -182,17 +192,29 @@ void    draw_rays(t_vars *vars, float *rx, float *ry)
             lineH = map_y;
         dy = 0;
         float ofsset;
-        while (dy < lineH)
+        ofsset = (map_y - lineH) / 2;
+        while (dy < ofsset)
         {
-            dx = 0;
-            ofsset = (map_y - lineH) / 2;
-            // (map_y - ofsset)
-                if (*ry != Ty)
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0x00FF0000);
-                else
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0x00CC0000);
+                my_mlx_pixel_put(&vars->pl_img, r,dy, 0x00FF00);
             dy++;
         }
+        dy = 0;
+        while (dy < lineH)
+        {
+            // (map_y - ofsset)
+            if (*ry != Ty)
+                my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xFF0000);
+            else
+                my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xCC0000);
+            dy++;
+        }
+        // draw floor
+        // dy = 0;
+        // if ((ofsset + lineH + dy) < map_y)
+        // {
+        //     my_mlx_pixel_put(&vars->pl_img, r, ofsset + lineH + dy, 0x00FF00);
+        //     dy++;
+        // }
         ra += DR/17;
         if (ra < 0)
             ra += 2 * PI;
@@ -209,7 +231,6 @@ void    draw_line(t_vars *vars)
     // float dx = 0;
     // float i = 0;
     draw_rays(vars, &rx, &ry);
-    printf("angle %f\n",vars->player.pa);
     // if (pa < PI)
     //     i = fabs(py - ry)/sin(pa);
     // else
@@ -318,11 +339,11 @@ void    ft_swap(int *a, int *b)
 
 int    key_pressed(int keycode, t_vars *vars)
 {
-    if (keycode == arrow_down && vars->map[(int)((vars->player.py / (768 / 12)) - (20 / (float)(768 / 12)) )][(int)(vars->player.px / (1024 / 16))] == 0)
+    if (keycode == arrow_down)
     {
         vars->player.down = 1;
     }
-    if (keycode == arrow_up && vars->map[(int)((vars->player.py / (768 / 12)) - (20 / (float)(768 / 12)) )][(int)(vars->player.px / (1024 / 16))] == 0)
+    if (keycode == arrow_up)
     {
         vars->player.up = 1;
     }
@@ -377,6 +398,7 @@ void    move(t_vars *vars)
         yo = 20;
     if (vars->player.down)
     {
+        printf("x=%d   y =%d \n",(int)(vars->player.py - yo) / 64, (int)(vars->player.px - xo) / 64);
         if (vars->map[(int)(vars->player.py - yo) / 64][(int)vars->player.px / 64] == 0)
             vars->player.py -= vars->player.pdy;
         if (vars->map[(int)vars->player.py / 64][(int)(vars->player.px - xo) / 64] == 0)
@@ -385,6 +407,7 @@ void    move(t_vars *vars)
     // if (keycode == 125 && vars->map[(int)((py / (1080 / 12)) + (20 / (float)(1080 / 12)) )][(int)(px / (1920 / 16))] == 0)
     if (vars->player.up)
     {
+        printf("x=%d   y =%d \n",(int)(vars->player.py + yo) / 64, (int)(vars->player.px + xo) / 64);
         if (vars->map[(int)(vars->player.py + yo) / 64][(int)vars->player.px / 64] == 0)
             vars->player.py += vars->player.pdy;
         if (vars->map[(int)vars->player.py / 64][(int)(vars->player.px + xo) / 64] == 0)
@@ -423,6 +446,21 @@ int update(t_vars *vars)
 	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
     move(vars);
     render_next_frame(vars);
+    return (1);
+}
+
+int     init_textures(t_vars *vars)
+{
+    vars->textures[0].file = "./eagle.xpm";
+    vars->textures[0].tex_img.img = mlx_xpm_file_to_image(vars->mlx, vars->textures[0].file, &vars->textures[0].img_width, &vars->textures[0].img_height);
+    vars->textures[0].tex_img.addr = mlx_get_data_addr(vars->textures[0].tex_img.img, &vars->textures[0].tex_img.bits_per_pixel, &vars->textures[0].tex_img.line_length, &vars->textures[0].tex_img.endian);
+    // while (vars->textures[0].tex_img.addr)
+    // {
+    //     printf("--%d",(int)*(vars->textures[0].tex_img.addr));
+    //     vars->textures[0].tex_img.addr++;
+    // }
+    // printf("\n");
+    // exit(0);
     return (1);
 }
 
@@ -468,9 +506,9 @@ int main(int ac, char *av[])
     // // vars.pl_img.addr = mlx_get_data_addr(vars.pl_img.img, &vars.pl_img.bits_per_pixel, &vars.pl_img.line_length, &vars.pl_img.endian);
     initPlayer(&vars);
     drawmap(vars.mlx, vars.win, &vars);
+    init_textures(&vars);
     // drawPlayer(vars.mlx, vars.win, &vars);
     // mlx_loop_hook(vars.mlx, render_next_frame(), &vars);
-   
     mlx_loop_hook(vars.mlx, update, &vars);
     mlx_loop(vars.mlx);
     return (0);
