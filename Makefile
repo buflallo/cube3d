@@ -7,10 +7,10 @@ SANITIZE=-fsanitize=address
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(OBJ) -Lmlx -lmlx -framework OpenGL -O3 -framework AppKit -o $(NAME)
+	$(CC) $(OBJ) -Lmlx -lmlx -framework OpenGL -O3 -framework AppKit -o $(NAME) -fsanitize=address
 
 %.o:%.c
-	$(CC) -Wall -Wextra -Werror -Imlx -c $< -o $@
+	$(CC) -Wall -Wextra -Werror -g -Imlx  -c $< -o $@
 
 clean:
 	rm -f $(OBJ)
