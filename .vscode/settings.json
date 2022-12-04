@@ -3,6 +3,11 @@
         "cmath": "c",
         "__locale": "c",
         "bitset": "c",
-        "iterator": "c"
+        "iterator": "c",
+        "stdlib.h": "c",
+        "ctype.h": "c",
+        "get_next_line.h": "c",
+        "cub3d.h": "c",
+        "ios": "c"
     }
 }
