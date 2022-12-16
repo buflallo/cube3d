@@ -350,47 +350,67 @@ void    ft_swap(int *a, int *b)
 int    key_pressed(int keycode, t_vars *vars)
 {
     if (keycode == arrow_down)
-    {
         vars->player.down = 1;
-    }
     if (keycode == arrow_up)
-    {
         vars->player.up = 1;
-    }
     if (keycode == arrow_left)
-    {
         vars->player.left = 1;
-    }
     if (keycode == arrow_right)
-    {
         vars->player.right = 1;
-    }
     return (keycode);
 }
 
 int key_release(int keycode, t_vars *vars)
 {
     if (keycode == arrow_down)
-    {
         vars->player.down = 0;
-    }
     if (keycode == arrow_up)
-    {
         vars->player.up = 0;
-    }
     if (keycode == arrow_left)
-    {
         vars->player.left = 0;
-    }
     if (keycode == arrow_right)
-    {
         vars->player.right = 0;
-    }
     if (keycode == 53)
-    {
         exit(0);
-    }
     return (keycode);
+}
+
+void    move_up_down(t_player *player, t_parse parse, int xo, int yo)
+{
+    if (player->down)
+    {
+        if (parse.map[(int)(player->py - yo) / 64][(int)player->px / 64] == 0)
+            player->py -= player->pdy;
+        if (parse.map[(int)player->py / 64][(int)(player->px - xo) / 64] == 0)
+            player->px -= player->pdx;
+    }
+    if (player->up)
+    {
+        if (parse.map[(int)(player->py + yo) / 64][(int)player->px / 64] == 0)
+            player->py += player->pdy;
+        if (parse.map[(int)player->py / 64][(int)(player->px + xo) / 64] == 0)
+            player->px += player->pdx;
+    }
+}
+
+void    move_up_down(t_player *player, int xo, int yo)
+{
+    if (player->left)
+    {
+        player->pa -= 0.05;
+        if (player->pa < 0)
+            player->pa += PI * 2;
+        player->pdx = cos(player->pa) * 3;
+        player->pdy = sin(player->pa) * 3;
+    }
+    if (player->right)
+    {
+        player->pa += 0.05;
+        if (player->pa > 2 * PI)
+            player->pa -= 2 * PI;
+        player->pdx = cos(player->pa) * 3;
+        player->pdy = sin(player->pa) * 3;
+    }
 }
 
 void    move(t_vars *vars)
@@ -406,37 +426,8 @@ void    move(t_vars *vars)
         yo = -5;
     else
         yo = 5;
-    if (vars->player.down)
-    {
-        if (vars->parse.map[(int)(vars->player.py - yo) / 64][(int)vars->player.px / 64] == 0)
-            vars->player.py -= vars->player.pdy;
-        if (vars->parse.map[(int)vars->player.py / 64][(int)(vars->player.px - xo) / 64] == 0)
-            vars->player.px -= vars->player.pdx;
-    }
-    if (vars->player.up)
-    {
-        if (vars->parse.map[(int)(vars->player.py + yo) / 64][(int)vars->player.px / 64] == 0)
-            vars->player.py += vars->player.pdy;
-        if (vars->parse.map[(int)vars->player.py / 64][(int)(vars->player.px + xo) / 64] == 0)
-            vars->player.px += vars->player.pdx;
-    }
-    if (vars->player.left)
-    {
-        vars->player.pa -= 0.05;
-        if (vars->player.pa < 0)
-            vars->player.pa += PI * 2;
-        vars->player.pdx = cos(vars->player.pa) * 3;
-        vars->player.pdy = sin(vars->player.pa) * 3;
-    }
-    if (vars->player.right)
-    {
-        vars->player.pa += 0.05;
-        if (vars->player.pa > 2 * PI)
-            vars->player.pa -= 2 * PI;
-        vars->player.pdx = cos(vars->player.pa) * 3;
-        vars->player.pdy = sin(vars->player.pa) * 3;
-    }
-    (void)vars;
+    move_up_down(&vars->player, vars->parse, xo, yo);
+    move_left_right(&vars->player, xo, yo);
 }
 
 int render_next_frame(t_vars *vars)
