@@ -33,6 +33,29 @@ typedef struct	s_data {
 	int		endian;
 }				t_data;
 
+typedef struct s_rays
+{
+	int		num_r;
+    float   rx;
+    float   ry;
+    float   ra;
+    float   r_xo;
+    float   r_yo;
+    float   Dist_H;
+    float   Dist_V;
+}   t_rays;
+
+typedef struct s_frame
+{
+    float	lineH;
+    float	Dist;
+    float	distance;
+    float	ofsset;
+    int		offsetx;
+    float   offsety;
+} t_frame;
+
+
 typedef struct	s_player {
 	int	    up;
 	int		down;
@@ -70,7 +93,7 @@ typedef struct	s_vars {
 void	my_mlx_pixel_put(t_data *data, int x, int y, int color);
 void    drawPlayer(t_vars *vars);
 void    drawmap(void *mlx, void *win, t_vars *vars);
-void    draw_rays(t_vars *vars, float *rx, float *ry);
+void    draw_rays(t_vars *vars);
 int    key_pressed(int keycode, t_vars *vars);
 void    move(t_vars *vars);
 int render_next_frame(t_vars *vars);

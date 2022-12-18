@@ -25,194 +25,234 @@ void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
 	*(unsigned int*)dst = color;
 }
 
-void    draw_rays(t_vars *vars, float *rx, float *ry)
+
+void    search_h_inter(t_rays *rays, t_vars *vars, int x)
 {
-    // draw rays
-    int   r,mx,my,dof;
-    float ra, xo = 0,yo = 0, Tx = 0, Ty = 0, Dist = 0;
-    float aTan;
+    int    mx;
+    int    my;
+    int    dof;
 
-    ra = vars->player.pa - (30 * DR);
-    if (ra < 0)
-        ra += 2 * PI;
-    if (ra > 2 * PI)
-        ra -= 2 * PI;
-    for (r=0; r < map_x ; r++)
+	dof = x;
+    while (dof < vars->parse.height) 
+	{
+		mx = (int)(rays->rx) / 64;
+		my = (int)(rays->ry) / 64;
+		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+			dof = vars->parse.height;
+		else 
+		{
+			rays->rx += rays->r_xo;
+			rays->ry += rays->r_yo;
+			dof += 1;
+		}
+	}
+	rays->Dist_H = fabs(fabs(vars->player.py - rays->ry)/sin(rays->ra));
+}
+
+void    search_v_inter(t_rays *rays, t_vars *vars, int x)
+{
+    int		mx;
+    int		my;
+	int		dof;
+
+	dof = x;
+    while (dof < vars->parse.width)
+	{
+		mx = (int)(rays->rx) / 64;
+		my = (int)(rays->ry) / 64;
+		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+			dof = vars->parse.width;
+		else 
+		{
+			rays->rx += rays->r_xo;
+			rays->ry += rays->r_yo;
+			dof += 1;
+		}
+	}
+	rays->Dist_V = fabs(fabs(vars->player.py - rays->ry)/sin(rays->ra));
+}
+
+void    ray_up_or_down(t_rays *rays, char dir, t_vars *vars)
+{
+	float	aTan;
+
+	aTan = -1 / tan(rays->ra);
+	if (dir == 'u')
+	{
+		rays->ry = ((int)vars->player.py - ((int)vars->player.py % 64)) - 0.01;
+		rays->r_yo = -64;
+	}
+	else
+	{
+		rays->ry = ((int)vars->player.py - ((int)vars->player.py % 64)) + 64;
+		rays->r_yo = 64;
+	}
+	rays->rx = (vars->player.py - rays->ry) * aTan + vars->player.px;
+	rays->r_xo = -rays->r_yo * aTan;
+	if (dir == 's')
+	{
+		rays->rx = vars->player.px;
+		rays->ry = vars->player.py;
+		search_h_inter(rays, vars, vars->parse.height);
+		return ;
+	}
+    search_h_inter(rays, vars, 0);
+}
+
+void    ray_lef_or_right(t_rays *rays, char dir, t_vars *vars)
+{
+    float	aTan;
+
+	aTan = -tan(rays->ra);
+	if (dir == 'l')
+	{
+		rays->rx = ((int)vars->player.px - ((int)vars->player.px % 64)) - 0.01;
+		rays->r_xo = -64;
+	}
+	else
+	{
+		rays->rx = ((int)vars->player.px - ((int)vars->player.px % 64)) + 64;
+		rays->r_xo = 64;
+	}
+	rays->ry = (vars->player.px - rays->rx) * aTan + vars->player.py;
+	rays->r_yo = -rays->r_xo * aTan;
+	if (dir == 'w')
+	{
+		rays->rx = vars->player.px;
+		rays->ry = vars->player.py;
+		search_v_inter(rays, vars, vars->parse.width);
+		return ;
+	}
+    search_v_inter(rays, vars, 0);
+}
+
+void    init_ray_values(t_rays *rays, char dir, t_vars *vars)
+{
+	if (dir == 'u' || dir == 'd' || dir == 's')
+		ray_up_or_down(rays, dir, vars);
+	if (dir == 'l' || dir == 'r' || dir == 's')
+		ray_lef_or_right(rays, dir, vars);
+}
+
+t_frame	*init_frame(t_vars *vars, t_rays *rays, float dist)
+{
+	t_frame	*frame;
+
+	frame = (t_frame *)malloc(sizeof(t_frame));
+	frame->Dist = dist;
+	frame->Dist = frame->Dist * cos(vars->player.pa - rays->ra);
+	frame->lineH = (64 * map_y * tan(45 * DR)) /frame->Dist;
+	frame->ofsset = (map_y - frame->lineH) / 2;
+	if (frame->lineH > map_y)
+		frame->ofsset = 0;
+	if (rays->Dist_V < rays->Dist_H)
+		frame->offsetx = (int)(rays->ry) % 64;
+	else
+		frame->offsetx = (int)(rays->rx) % 64;
+	return (frame);
+}
+
+void	draw_celling(t_data *img, int x, int y)
+{
+	int dy;
+
+	dy = 0;
+	while (dy < y)
+	{
+			my_mlx_pixel_put(img, x,dy, 546511);
+		dy++;
+	}
+}
+
+void	draw_floor(t_data *img, int x, int y)
+{
+	int dy;
+
+	dy = y;
+	while (dy < map_y)
+	{
+			my_mlx_pixel_put(img, x,dy, 0x000000);
+		dy++;
+	}
+}
+
+void	draw_wall(t_vars *vars, t_rays *rays, t_frame *frame)
+{
+	int dy;
+
+	dy = 0;
+	while (dy < frame->lineH && dy < map_y)
+	{
+		// frame->distance = (ofsset + dy + ((int)lineH / 2) - (map_y / 2));
+		// frame->offsety = (frame->ofsset + dy + ((int)frame->lineH / 2) - (map_y / 2)) * ((float)64 / (int)frame->lineH);
+		if (rays->Dist_V < rays->Dist_H)
+		{
+			if (rays->ra > P2 && rays->ra < P3)
+				// my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[WE].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, 0xFF5733);
+			else
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, 0xA569BD);
+				// my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[EA].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+		}
+		else
+		{
+			if (rays->ra > PI)
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, 0xDAF7A6);
+				// my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[SO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+			else
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, 0xFFC300);
+				// my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[NO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+		}
+		dy++;
+	}
+}
+
+void	draw_frame(t_rays *rays, t_vars *vars, float dist)
+{
+	int dx;
+	t_frame   *frame;
+
+	frame = init_frame(vars, rays, dist);
+	draw_celling(&vars->pl_img, rays->num_r, frame->ofsset);
+	draw_wall(vars, rays, frame);
+	draw_floor(&vars->pl_img, rays->num_r, frame->ofsset + frame->lineH);
+}
+
+void	check_angle(t_rays *rays)
+{
+	if (rays->ra < 0)
+		rays->ra += 2 * PI;
+	if (rays->ra > 2 * PI)
+		rays->ra -= 2 * PI;
+}
+
+void    draw_rays(t_vars *vars)
+{
+	t_rays	*rays;
+
+	rays = (t_rays *)malloc(sizeof(t_rays));
+	rays->ra = vars->player.pa - (30 * DR);
+    check_angle(rays);
+    for (rays->num_r=0; rays->num_r < map_x ; rays->num_r++)
     {
-        //check horizontal lines
-        dof = 0;
-        aTan = -1 / tan(ra);
-        if (ra > PI) 
-        {
-            // looking up
-            *ry = ((int)vars->player.py - ((int)vars->player.py % 64)) - 0.0001;
-            *rx = (vars->player.py - *ry) * aTan + vars->player.px;
-            yo = -64;
-            xo = -yo * aTan;
-        } 
-        if (ra < PI)
-        {
-            // looking down
-            *ry = ((int)vars->player.py - ((int)vars->player.py % 64)) + 64;
-            *rx = (vars->player.py - *ry) * aTan + vars->player.px;
-            yo = 64;
-            xo = -yo * aTan;
-        } 
-        if (ra == 0 || ra == PI) 
-        {
-            // looking straight
-            *rx = vars->player.px;
-            *ry = vars->player.py;
-            dof = vars->parse.height;
-        }
-        while (dof < vars->parse.height) 
-        {
-            mx = (int)(*rx) / 64;
-            my = (int)(*ry) / 64;
-            if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
-                dof = vars->parse.height;
-            else 
-            {
-                *rx += xo;
-                *ry += yo;
-                dof += 1;
-            }
-        }
-        Tx = *rx;
-        Ty = *ry;
-        //check vertical lines
-        dof = 0;
-        aTan = -tan(ra);
-        if (ra > P2 && ra < P3) 
-        {
-            //looking left
-            *rx = ((int)vars->player.px - ((int)vars->player.px % 64)) - 0.0001;
-            *ry = (vars->player.px - *rx) * aTan + vars->player.py;
-            xo = -64;
-            yo = -xo * aTan;
-        }
-        if (ra < P2 || ra > P3) 
-        {
-            // looking right
-            //n9s l modulo d 64
-            *rx = ((int)vars->player.px - ((int)vars->player.px % 64)) + 64;
-            *ry = (vars->player.px - *rx) * aTan + vars->player.py;
-            xo = 64;
-            yo = -xo * aTan;
-        } 
-        if (ra == 0 || ra == PI) 
-        {
-            // looking up or down
-            *rx = vars->player.px;
-            *ry = vars->player.py;
-            dof = vars->parse.width;
-        }
-        while (dof < vars->parse.width) 
-        {
-            mx = (int)(*rx) / 64;
-            my = (int)(*ry) / 64;
-            if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1)
-                dof = vars->parse.width;
-            else
-            {
-                *rx += xo;
-                *ry += yo;
-                dof += 1;
-            }
-        }
-        if (fabs(fabs(vars->player.py - *ry)/sin(ra)) > fabs(fabs(vars->player.py - Ty)/sin(ra)))
-        {
-            //take the closet intersection
-            Dist = fabs(fabs(vars->player.py - Ty)/sin(ra));
-            *ry = Ty;
-            *rx = Tx ;
-        }
-        else
-            Dist = fabs(fabs(vars->player.py - *ry)/sin(ra));
-        
-
-        float     dy;
-        float   lineH;
-        Dist = Dist * cos(vars->player.pa - ra);
-        lineH = (64 * map_y * tan(45 * DR)) / Dist;
-        // if (lineH > map_y)
-        //     lineH = map_y;
-        dy = 0;
-        float ofsset;
-        ofsset = (map_y - lineH) / 2;
-        if (lineH > map_y)
-            ofsset = 0;
-        while (dy < ofsset)
-        {
-                my_mlx_pixel_put(&vars->pl_img, r,dy, 546511);
-            dy++;
-        }
-        dy = 0;
-        int dx;
-        dx = 0;
-        int offsetx;
-        if (*ry != Ty)
-        {
-            offsetx = (int)(*ry) % 64;
-        }   
-        else
-        {
-            offsetx = (int)(*rx) % 64;
-        }
-        while (dy < lineH && dy < map_y)
-        {
-            // float distance = (ofsset + dy + ((int)lineH / 2)
-				// - (map_y / 2));
-		    // float offsety = distance * ((float)64 / (int)lineH);
-            if (*ry != Ty)
-            {
-                if (ra > P2 && ra < P3)
-                {
-                    // my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, vars->textures[WE].data[(int)(((int)offsety) * 64 + offsetx)]);
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xFF5733);
-                }
-                else
-                {
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xA569BD);
-                    // my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, vars->textures[EA].data[(int)(((int)offsety) * 64 + offsetx)]);
-                }
-            }
-            else
-            {
-                if (ra > PI)
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xDAF7A6);
-                    // my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, vars->textures[SO].data[(int)(((int)offsety) * 64 + offsetx)]);
-                else
-                    my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, 0xFFC300);
-                    // my_mlx_pixel_put(&vars->pl_img, r,ofsset + dy, vars->textures[NO].data[(int)(((int)offsety) * 64 + offsetx)]);
-            }
-            dy++;
-        }
-        // draw floor
-        dy = 0;
-        while ((ofsset + lineH + dy) < map_y)
-        {
-            my_mlx_pixel_put(&vars->pl_img, r, ofsset + lineH + dy, 0x00FF00);
-            dy++;
-        }
-        // int dx;
-        // dx = 0;
-        // int i = 0;
-        // if (ra < PI)
-        //     i = fabs(vars->player.py - *ry)/sin(ra);
-        // else
-        //     i = -fabs(vars->player.py - *ry)/sin(ra);
-        // // printf ("rx = %f *ry = %f i = %f\n", vars->player.px - *rx, vars->player.py - *ry, fabs(vars->player.py - *ry)/sin(vars->player.pa));
-        // while (dx < i)
-        // {
-        //     my_mlx_pixel_put(&vars->pl_img,  vars->player.px + dx * cos(ra), vars->player.py + dx * sin(ra), 0x00000000);
-        //     dx++;
-        // }
-        ra += DR/(map_x / 60);
-        if (ra < 0)
-            ra += 2 * PI;
-        if (ra > 2 * PI)
-            ra -= 2 * PI;
+        if (rays->ra > PI) 
+            init_ray_values(rays, 'u', vars);
+        if (rays->ra < PI)
+            init_ray_values(rays, 'd', vars);
+        if (rays->ra == 0 || rays->ra == PI) 
+            init_ray_values(rays, 's', vars);
+        if (rays->ra > P2 && rays->ra < P3) 
+        	init_ray_values(rays, 'l', vars);
+        if (rays->ra < P2 || rays->ra > P3) 
+        	init_ray_values(rays, 'r', vars);
+        if (rays->ra == 0 || rays->ra == PI) 
+			init_ray_values(rays, 's', vars);
+        if (rays->Dist_H < rays->Dist_V)
+			draw_frame(rays, vars, rays->Dist_H);
+		else
+			draw_frame(rays, vars, rays->Dist_V);
+        rays->ra += DR/(map_x / 60);
+        check_angle(rays);
     }
 }
 
@@ -223,7 +263,7 @@ void    draw_line(t_vars *vars)
     float ry = 0;
     // float dx = 0;
     // float i = 0;
-    draw_rays(vars, &rx, &ry);
+    draw_rays(vars);
     // if (vars->player.pa < PI)
     //     i = fabs(vars->player.py - ry)/sin(vars->player.pa);
     // else
@@ -393,7 +433,7 @@ void    move_up_down(t_player *player, t_parse parse, int xo, int yo)
     }
 }
 
-void    move_up_down(t_player *player, int xo, int yo)
+void    move_left_right(t_player *player, int xo, int yo)
 {
     if (player->left)
     {
@@ -438,9 +478,9 @@ int render_next_frame(t_vars *vars)
 
 int update(t_vars *vars)
 {
-    mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
-	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
-    move(vars);
+    // mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
+	// mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
+    // move(vars);
     render_next_frame(vars);
     return (1);
 }
@@ -465,16 +505,16 @@ int main(int ac, char *av[])
     (void)ac;
 	vars.mlx = mlx_init();
     vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Hello world!");
-    // vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
+    vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
     // // vars.pl_img.addr = mlx_get_data_addr(vars.pl_img.img, &vars.pl_img.bits_per_pixel, &vars.pl_img.line_length, &vars.pl_img.endian);
-    parse_map(av, &parse);
+    parse_file(ac, av, &parse);
     vars.parse = parse;
     initPlayer(&vars);
     // init_textures(&vars, NO, parse.no);
     // init_textures(&vars, SO, parse.so);
     // init_textures(&vars, WE, parse.we);
     // init_textures(&vars, EA, parse.ea);
-    drawmap(vars.mlx, vars.win, &vars);
+    // drawmap(vars.mlx, vars.win, &vars);
     // drawPlayer(vars.mlx, vars.win, &vars);
     // mlx_loop_hook(vars.mlx, render_next_frame(), &vars);
     mlx_loop_hook(vars.mlx, update, &vars);

@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.c": "c",
         "cmath": "c",
         "__locale": "c",
         "bitset": "c",
@@ -8,6 +9,8 @@
         "ctype.h": "c",
         "get_next_line.h": "c",
         "cub3d.h": "c",
-        "ios": "c"
+        "ios": "c",
+        "math.h": "c",
+        "fcntl.h": "c"
     }
 }
