@@ -232,9 +232,11 @@ void    draw_rays(t_vars *vars)
 
 	rays = (t_rays *)malloc(sizeof(t_rays));
 	rays->ra = vars->player.pa - (30 * DR);
+    // printf("rays->ra = %f\n", rays->ra);
     check_angle(rays);
     for (rays->num_r=0; rays->num_r < map_x ; rays->num_r++)
     {
+        // printf("rays->num_r = %d\n", rays->num_r);
         if (rays->ra > PI) 
             init_ray_values(rays, 'u', vars);
         if (rays->ra < PI)
