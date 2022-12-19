@@ -480,9 +480,9 @@ int render_next_frame(t_vars *vars)
 
 int update(t_vars *vars)
 {
-    // mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
-	// mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
-    // move(vars);
+    mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
+	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
+    move(vars);
     render_next_frame(vars);
     return (1);
 }
@@ -501,7 +501,7 @@ int     init_textures(t_vars *vars, int Dir, char *name)
 int main(int ac, char *av[])
 {
     t_vars  vars;
-    t_parse  parse;
+    t_parse  *parse;
     // int     c;
 
     (void)ac;
@@ -509,16 +509,18 @@ int main(int ac, char *av[])
     vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Hello world!");
     vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
     // // vars.pl_img.addr = mlx_get_data_addr(vars.pl_img.img, &vars.pl_img.bits_per_pixel, &vars.pl_img.line_length, &vars.pl_img.endian);
-    parse_file(ac, av, &parse);
-    vars.parse = parse;
+    parse = (t_parse *)malloc(sizeof(t_parse));
+    parse_file(ac, av, parse);
+    printf("hello\n");
+    vars.parse = *parse;
     initPlayer(&vars);
-    // init_textures(&vars, NO, parse.no);
-    // init_textures(&vars, SO, parse.so);
-    // init_textures(&vars, WE, parse.we);
-    // init_textures(&vars, EA, parse.ea);
+    init_textures(&vars, NO, parse.no);
+    init_textures(&vars, SO, parse.so);
+    init_textures(&vars, WE, parse.we);
+    init_textures(&vars, EA, parse.ea);
     // drawmap(vars.mlx, vars.win, &vars);
     // drawPlayer(vars.mlx, vars.win, &vars);
-    // mlx_loop_hook(vars.mlx, render_next_frame(), &vars);
+    // mlx_loop_hook(vars.mlx, render_next_frame, &vars);
     mlx_loop_hook(vars.mlx, update, &vars);
     mlx_loop(vars.mlx);
     return (0);
