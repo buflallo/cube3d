@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <math.h>
-#include "parse/cub3d.h"
+#include "parse/cub3d_parse.h"
 #include "parse/gnl/get_next_line.h"
 
 #define PI 3.14159265358979323846
@@ -36,8 +36,10 @@ typedef struct	s_data {
 typedef struct s_rays
 {
 	int		num_r;
-    float   rx;
-    float   ry;
+    float   v_rx;
+    float   v_ry;
+    float   h_ry;
+    float   h_rx;
     float   ra;
     float   r_xo;
     float   r_yo;
@@ -102,5 +104,5 @@ int     init_textures(t_vars *vars, int Dir, char *name);
 int key_release(int keycode, t_vars *vars);
 void    ft_swap(int *a, int *b);
 int key_release(int keycode, t_vars *vars);
-void    initPlayer(t_vars  *vars);
+void    initplayer(t_vars  *vars);
 #endif

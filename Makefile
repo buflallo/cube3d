@@ -1,16 +1,16 @@
 NAME=cub3d
 CC=cc
-SRC=parse/errors_utils.c parse/main.c parse/parse.c parse/parse_utils.c parse/parse_utils2.c main.c ./parse/gnl/get_next_line.c ./parse/gnl/get_next_line_utils.c
-OBJ=parse/errors_utils.o parse/main.o parse/parse.o parse/parse_utils.o parse/parse_utils2.o main.o ./parse/gnl/get_next_line.o ./parse/gnl/get_next_line_utils.o
+SRC=parse/errors_utils.c parse/main.c parse/map.c parse/collect.c parse/parse.c parse/parse2.c parse/parse_utils.c parse/parse_utils2.c parse/parse_utils3.c parse/./gnl/get_next_line.c parse/./gnl/get_next_line_utils.c main.c
+OBJ=parse/errors_utils.o parse/main.o parse/map.o parse/collect.o parse/parse.o parse/parse2.o parse/parse_utils.o parse/parse_utils2.o parse/parse_utils3.o parse/./gnl/get_next_line.o parse/./gnl/get_next_line_utils.o main.o
 SANITIZE=-fsanitize=address
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) $(OBJ) -Lmlx -lmlx -framework OpenGL -O3 -framework AppKit -o $(NAME)
+	$(CC) $(OBJ) -Lmlx -lmlx -framework OpenGL -O3 -framework AppKit -o $(NAME) $(SANITIZE)
 
 %.o:%.c
-	$(CC) -c $< -o $@
+	$(CC) -g -c $< -o $@
 
 clean:
 	rm -f $(OBJ)
