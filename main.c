@@ -6,7 +6,7 @@
 /*   By: hlachkar <hlachkar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/20 02:42:07 by hlachkar          #+#    #+#             */
-/*   Updated: 2022/12/20 02:42:13 by hlachkar         ###   ########.fr       */
+/*   Updated: 2022/12/21 00:15:06 by hlachkar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,20 +43,21 @@ void	search_h_inter(t_rays *rays, t_vars *vars, int x)
 	int		dof;
 
 	dof = x;
-	while (dof < vars->parse.height) 
+	while (dof < vars->parse.height)
 	{
 		mx = (int)(rays->h_rx) / 64;
 		my = (int)(rays->h_ry) / 64;
-		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+		if (abs(my) < vars->parse.height && abs(mx)
+			< vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1)
 			dof = vars->parse.height;
-		else 
+		else
 		{
 			rays->h_rx += rays->r_xo;
 			rays->h_ry += rays->r_yo;
 			dof += 1;
 		}
 	}
-	rays->Dist_H = fabs(fabs(vars->player.py - rays->h_ry)/sin(rays->ra));
+	rays->Dist_H = fabs(fabs(vars->player.py - rays->h_ry) / sin(rays->ra));
 }
 
 void	search_v_inter(t_rays *rays, t_vars *vars, int x)
@@ -70,7 +71,8 @@ void	search_v_inter(t_rays *rays, t_vars *vars, int x)
 	{
 		mx = (int)(rays->v_rx) / 64;
 		my = (int)(rays->v_ry) / 64;
-		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+		if (abs(my) < vars->parse.height && abs(mx)
+			< vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1)
 			dof = vars->parse.width;
 		else
 		{
@@ -79,7 +81,7 @@ void	search_v_inter(t_rays *rays, t_vars *vars, int x)
 			dof += 1;
 		}
 	}
-	rays->Dist_V = fabs(fabs(vars->player.py - rays->v_ry)/sin(rays->ra));
+	rays->Dist_V = fabs(fabs(vars->player.py - rays->v_ry) / sin(rays->ra));
 }
 
 void	ray_up_or_down(t_rays *rays, char dir, t_vars *vars)
@@ -89,7 +91,8 @@ void	ray_up_or_down(t_rays *rays, char dir, t_vars *vars)
 	atan = -1 / tan(rays->ra);
 	if (dir == 'u')
 	{
-		rays->h_ry = ((int)vars->player.py - ((int)vars->player.py % 64)) - 0.01;
+		rays->h_ry = ((int)vars->player.py
+				- ((int)vars->player.py % 64)) - 0.01;
 		rays->r_yo = -64;
 	}
 	else
@@ -116,7 +119,8 @@ void	ray_lef_or_right(t_rays *rays, char dir, t_vars *vars)
 	atan = -tan(rays->ra);
 	if (dir == 'l')
 	{
-		rays->v_rx = ((int)vars->player.px - ((int)vars->player.px % 64)) - 0.01;
+		rays->v_rx = ((int)vars->player.px
+				- ((int)vars->player.px % 64)) - 0.01;
 		rays->r_xo = -64;
 	}
 	else
@@ -193,21 +197,30 @@ void	draw_wall(t_vars *vars, t_rays *rays, t_frame *frame)
 	dy = 0;
 	while (dy < frame->lineH && dy < map_y)
 	{
-		frame->distance = (frame->ofsset + dy + ((int)frame->lineH / 2) - (map_y / 2));
+		frame->distance = (frame->ofsset + dy
+				+ ((int)frame->lineH / 2) - (map_y / 2));
 		frame->offsety = frame->distance * ((float)64 / (int)frame->lineH);
 		if (rays->Dist_V < rays->Dist_H)
 		{
 			if (rays->ra > P2 && rays->ra < P3)
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[WE].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,
+					frame->ofsset + dy, vars->textures[WE].data
+				[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
 			else
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[EA].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r, frame->ofsset
+					+ dy, vars->textures[EA].data[(int)
+					(((int)frame->offsety) * 64 + frame->offsetx)]);
 		}
 		else
 		{
 			if (rays->ra > PI)
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[SO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r, frame->ofsset
+					+ dy, vars->textures[SO].data[(int)
+					(((int)frame->offsety) * 64 + frame->offsetx)]);
 			else
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[NO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r, frame->ofsset
+					+ dy, vars->textures[NO].data[(int)
+					(((int)frame->offsety) * 64 + frame->offsetx)]);
 		}
 		dy++;
 	}
@@ -222,6 +235,7 @@ void	draw_frame(t_rays *rays, t_vars *vars, float dist)
 	draw_celling(&vars->pl_img, rays->num_r, frame->ofsset);
 	draw_wall(vars, rays, frame);
 	draw_floor(&vars->pl_img, rays->num_r, frame->ofsset + frame->lineH);
+	free(frame);
 }
 
 void	check_angle(t_rays *rays)
@@ -239,143 +253,53 @@ void	draw_rays(t_vars *vars)
 	rays = (t_rays *)malloc(sizeof(t_rays));
 	rays->ra = vars->player.pa - (30 * DR);
 	check_angle(rays);
-	for (rays->num_r=0; rays->num_r < map_x ; rays->num_r++)
+	rays->num_r = 0;
+	while (rays->num_r < map_x)
 	{
-		if (rays->ra > PI) 
+		if (rays->ra > PI)
 			init_ray_values(rays, 'u', vars);
 		if (rays->ra < PI)
 			init_ray_values(rays, 'd', vars);
-		if (rays->ra == 0 || rays->ra == PI) 
+		if (rays->ra == 0 || rays->ra == PI)
 			init_ray_values(rays, 's', vars);
-		if (rays->ra > P2 && rays->ra < P3) 
+		if (rays->ra > P2 && rays->ra < P3)
 			init_ray_values(rays, 'l', vars);
-		if (rays->ra < P2 || rays->ra > P3) 
+		if (rays->ra < P2 || rays->ra > P3)
 			init_ray_values(rays, 'r', vars);
-		if (rays->ra == 0 || rays->ra == PI) 
+		if (rays->ra == 0 || rays->ra == PI)
 			init_ray_values(rays, 's', vars);
 		if (rays->Dist_H < rays->Dist_V)
 			draw_frame(rays, vars, rays->Dist_H);
 		else
 			draw_frame(rays, vars, rays->Dist_V);
-		rays->ra += DR/(map_x / 60);
+		rays->ra += DR / (map_x / 60);
 		check_angle(rays);
+		rays->num_r++;
 	}
+	free(rays);
 }
 
-
-void    draw_line(t_vars *vars)
+void	draw_line(t_vars *vars)
 {
 	draw_rays(vars);
-	// if (vars->player.pa < PI)
-	//     i = fabs(vars->player.py - ry)/sin(vars->player.pa);
-	// else
-	//     i = -fabs(vars->player.py - ry)/sin(vars->player.pa);
-	// printf ("rx = %f ry = %f i = %f\n", vars->player.px - rx, vars->player.py - ry, fabs(vars->player.py - ry)/sin(vars->player.pa));
-	// while (dx < i)
-	// {
-	//     my_mlx_pixel_put(&vars->pl_img,  vars->player.px + dx * cos(vars->player.pa), vars->player.py + dx * sin(vars->player.pa), 0x00000000);
-	//     dx++;
-	// }
 }
 
-void    drawPlayer(t_vars *vars)
+void	drawplayer(t_vars *vars)
 {
-	// int    x;
-	// int    y;
-
-
-	// y = 0;
-
-
-	// while (y < 20)
-	// {
-	//     x = 0;
-	//     while (x < 20)
-	//     {
-	//         my_mlx_pixel_put(&vars->pl_img, vars->player.px + x, vars->player.py + y, 0x00FF0000);
-	//         x++;
-	//     }
-	//     y++;
-	// }
 	draw_line(vars);
 }
 
-
-void    drawmap(void *mlx, void *win, t_vars *vars)
+void	drawmap(void *mlx, void *win, t_vars *vars)
 {
-	int    x;
-	int    y;
-	int    i;
-	int    j;
-	int    minimapx;
-	int    minimapy;
-	int    offset[2];
-
 	if (vars->pl_img.img)
 	{
 		mlx_destroy_image(mlx, vars->pl_img.img);
 	}
 	vars->pl_img.img = mlx_new_image(mlx, map_x, map_y);
-	vars->pl_img.addr = mlx_get_data_addr(vars->pl_img.img, &vars->pl_img.bits_per_pixel, &vars->pl_img.line_length, &vars->pl_img.endian);
-	drawPlayer(vars);
-	i = 0;
-	offset[1] = 0;
-	minimapx = 200;
-	minimapy = 200;
-	while (i < vars->parse.height)
-	{
-		j = 0;
-		offset[0] = 0;
-		while (j < vars->parse.width)
-		{
-			y = 0;
-			if (vars->parse.map[i][j] == 1)
-			{
-				while (y < 200 / 64)
-				{
-					x = 0;
-					while (x < 200 / 64)
-					{
-						my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x0033FFFF);
-						x++;
-					}
-					y++;
-				}
-			}
-			if (vars->parse.map[i][j] == 0)
-			{
-				while (y < 200 / 64)
-				{
-					x = 0;
-					while (x < 200 / 64)
-					{
-						my_mlx_pixel_put(&vars->pl_img, offset[0] + x, offset[1] + y, 0x00FFFFFF);
-						x++;
-					}
-					y++;
-				}
-			}
-			offset[0] += 200 / 64;
-			j++;
-		}
-		offset[1] += 200 / 64;
-		i++;
-	}
-
-	y = 0;
-
-
-	// while (y < 20)
-	// {
-	//     x = 0;
-	//     while (x < 20)
-	//     {
-	//         my_mlx_pixel_put(&vars->pl_img, vars->player.px + x, vars->player.py + y, 0x00FF0000);
-	//         x++;
-	//     }
-	//     y++;
-	// }
-
+	vars->pl_img.addr = mlx_get_data_addr(vars->pl_img.img,
+			&vars->pl_img.bits_per_pixel, &vars->pl_img.line_length,
+			&vars->pl_img.endian);
+	drawplayer(vars);
 	mlx_put_image_to_window(mlx, win, vars->pl_img.img, 0, 0);
 }
 
@@ -454,7 +378,7 @@ void	move_left_right(t_player *player, int xo, int yo)
 	}
 }
 
-void    move(t_vars *vars)
+void	move(t_vars *vars)
 {
 	int	xo;
 	int	yo;
@@ -473,9 +397,16 @@ void    move(t_vars *vars)
 	move_left_right(&vars->player, xo, yo);
 }
 
-int render_next_frame(t_vars *vars)
+int	render_next_frame(t_vars *vars)
 {
 	drawmap(vars->mlx, vars->win, vars);
+	return (0);
+}
+
+int	xclose(t_vars *vars)
+{
+	mlx_destroy_window(vars->mlx, vars->win);
+	exit(0);
 	return (0);
 }
 
@@ -483,6 +414,7 @@ int	update(t_vars *vars)
 {
 	mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
 	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
+	mlx_hook(vars->win, 17, 0L, xclose, vars);
 	move(vars);
 	render_next_frame(vars);
 	return (1);
@@ -491,22 +423,27 @@ int	update(t_vars *vars)
 int	init_textures(t_vars *vars, int Dir, char *name)
 {
 	vars->textures[Dir].file = name;
-	vars->textures[Dir].tex_img.img = mlx_xpm_file_to_image(vars->mlx, vars->textures[Dir].file, &vars->textures[Dir].img_width, &vars->textures[Dir].img_height);
+	vars->textures[Dir].tex_img.img = mlx_xpm_file_to_image(
+			vars->mlx, vars->textures[Dir].file,
+			&vars->textures[Dir].img_width, &vars->textures[Dir].img_height);
 	if (!vars->textures[Dir].tex_img.img)
 		errors(11);
-	vars->textures[Dir].data = (int *)mlx_get_data_addr(vars->textures[Dir].tex_img.img, &vars->textures[Dir].tex_img.bits_per_pixel, &vars->textures[Dir].tex_img.line_length, &vars->textures[Dir].tex_img.endian);
+	vars->textures[Dir].data = (int *)mlx_get_data_addr(
+			vars->textures[Dir].tex_img.img,
+			&vars->textures[Dir].tex_img.bits_per_pixel,
+			&vars->textures[Dir].tex_img.line_length,
+			&vars->textures[Dir].tex_img.endian);
 	return (1);
 }
 
-int main(int ac, char *av[])
+int	main(int ac, char *av[])
 {
 	t_vars	vars;
 	t_parse	*parse;
 
 	(void)ac;
 	vars.mlx = mlx_init();
-	vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Hello world!");
-	vars.pl_img.img = mlx_new_image(vars.mlx, 1920, 1080);
+	vars.win = mlx_new_window(vars.mlx, map_x, map_y, "Cub3d");
 	parse = (t_parse *)malloc(sizeof(t_parse));
 	parse_map(ac, av, parse);
 	vars.parse = *parse;

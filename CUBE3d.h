@@ -93,7 +93,7 @@ typedef struct	s_vars {
 
 
 void	my_mlx_pixel_put(t_data *data, int x, int y, int color);
-void    drawPlayer(t_vars *vars);
+void    drawplayer(t_vars *vars);
 void    drawmap(void *mlx, void *win, t_vars *vars);
 void    draw_rays(t_vars *vars);
 int    key_pressed(int keycode, t_vars *vars);
