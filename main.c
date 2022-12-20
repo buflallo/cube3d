@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hlachkar <hlachkar@student.42.fr>          +#+  +:+       +#+        */
+/*   By: amoubare <amoubare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/20 02:42:07 by hlachkar          #+#    #+#             */
-/*   Updated: 2022/12/20 02:42:13 by hlachkar         ###   ########.fr       */
+/*   Updated: 2022/12/20 03:53:37 by amoubare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,13 +43,14 @@ void	search_h_inter(t_rays *rays, t_vars *vars, int x)
 	int		dof;
 
 	dof = x;
-	while (dof < vars->parse.height) 
+	while (dof < vars->parse.height)
 	{
 		mx = (int)(rays->h_rx) / 64;
 		my = (int)(rays->h_ry) / 64;
-		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width
+			&& vars->parse.map[abs(my)][abs(mx)] == 1)
 			dof = vars->parse.height;
-		else 
+		else
 		{
 			rays->h_rx += rays->r_xo;
 			rays->h_ry += rays->r_yo;
@@ -70,7 +71,8 @@ void	search_v_inter(t_rays *rays, t_vars *vars, int x)
 	{
 		mx = (int)(rays->v_rx) / 64;
 		my = (int)(rays->v_ry) / 64;
-		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width && vars->parse.map[abs(my)][abs(mx)] == 1) 
+		if (abs(my) < vars->parse.height && abs(mx) < vars->parse.width 
+			&& vars->parse.map[abs(my)][abs(mx)] == 1)
 			dof = vars->parse.width;
 		else
 		{
@@ -89,7 +91,8 @@ void	ray_up_or_down(t_rays *rays, char dir, t_vars *vars)
 	atan = -1 / tan(rays->ra);
 	if (dir == 'u')
 	{
-		rays->h_ry = ((int)vars->player.py - ((int)vars->player.py % 64)) - 0.01;
+		rays->h_ry = ((int)vars->player.py - ((int)vars->player.py % 64)) 
+			- 0.01;
 		rays->r_yo = -64;
 	}
 	else
@@ -116,7 +119,8 @@ void	ray_lef_or_right(t_rays *rays, char dir, t_vars *vars)
 	atan = -tan(rays->ra);
 	if (dir == 'l')
 	{
-		rays->v_rx = ((int)vars->player.px - ((int)vars->player.px % 64)) - 0.01;
+		rays->v_rx = ((int)vars->player.px - ((int)vars->player.px % 64))
+			- 0.01;
 		rays->r_xo = -64;
 	}
 	else
@@ -193,21 +197,30 @@ void	draw_wall(t_vars *vars, t_rays *rays, t_frame *frame)
 	dy = 0;
 	while (dy < frame->lineH && dy < map_y)
 	{
-		frame->distance = (frame->ofsset + dy + ((int)frame->lineH / 2) - (map_y / 2));
+		frame->distance = (frame->ofsset + dy + ((int)frame->lineH / 2)
+				- (map_y / 2));
 		frame->offsety = frame->distance * ((float)64 / (int)frame->lineH);
 		if (rays->Dist_V < rays->Dist_H)
 		{
 			if (rays->ra > P2 && rays->ra < P3)
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[WE].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r, frame->ofsset + dy,
+					vars->textures[WE].data[(int)(((int)frame->offsety) * 64
+						+ frame->offsetx)]);
 			else
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[EA].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy,
+					vars->textures[EA].data[(int)(((int)frame->offsety) * 64
+						+ frame->offsetx)]);
 		}
 		else
 		{
 			if (rays->ra > PI)
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[SO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy,
+					vars->textures[SO].data[(int)(((int)frame->offsety)
+						* 64 + frame->offsetx)]);
 			else
-				my_mlx_pixel_put(&vars->pl_img, rays->num_r,frame->ofsset + dy, vars->textures[NO].data[(int)(((int)frame->offsety) * 64 + frame->offsetx)]);
+				my_mlx_pixel_put(&vars->pl_img, rays->num_r, frame->ofsset + dy,
+					vars->textures[NO].data[(int)(((int)frame->offsety)
+						* 64 + frame->offsetx)]);
 		}
 		dy++;
 	}
