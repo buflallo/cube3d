@@ -63,6 +63,8 @@ typedef struct	s_player {
 	int		down;
 	int		left;
 	int		right;
+    int		aleft;
+	int		aright;
     float   px;
     float   py;
     float   pa;

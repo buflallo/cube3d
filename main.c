@@ -6,7 +6,7 @@
 /*   By: hlachkar <hlachkar@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/20 02:42:07 by hlachkar          #+#    #+#             */
-/*   Updated: 2022/12/21 00:22:24 by hlachkar         ###   ########.fr       */
+/*   Updated: 2022/12/21 03:30:20 by hlachkar         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,13 @@ void	initplayer(t_vars *vars)
 	vars->pl_img.img = NULL;
 	vars->player.py = 64 * vars->parse.y + 32;
 	vars->player.px = 64 * vars->parse.x + 32;
-	vars->player.pa = 0;
+	vars->player.pa = vars->parse.e_dir * (P3);
 	vars->player.down = 0;
 	vars->player.up = 0;
 	vars->player.left = 0;
 	vars->player.right = 0;
+	vars->player.aleft = 0;
+	vars->player.aright = 0;
 	vars->player.pdx = cos(vars->player.pa) * 3;
 	vars->player.pdy = sin(vars->player.pa) * 3;
 }
@@ -166,26 +168,26 @@ t_frame	*init_frame(t_vars *vars, t_rays *rays, float dist)
 	return (frame);
 }
 
-void	draw_celling(t_data *img, int x, int y)
+void	draw_celling(t_data *img, int x, int y, int color)
 {
 	int	dy;
 
 	dy = 0;
 	while (dy < y)
 	{
-		my_mlx_pixel_put(img, x, dy, 546511);
+		my_mlx_pixel_put(img, x, dy, color);
 		dy++;
 	}
 }
 
-void	draw_floor(t_data *img, int x, int y)
+void	draw_floor(t_data *img, int x, int y, int color)
 {
 	int	dy;
 
 	dy = y;
 	while (dy > 0 && dy < map_y)
 	{
-		my_mlx_pixel_put(img, x, dy, 0x00ff00);
+		my_mlx_pixel_put(img, x, dy, color);
 		dy++;
 	}
 }
@@ -232,9 +234,9 @@ void	draw_frame(t_rays *rays, t_vars *vars, float dist)
 	t_frame		*frame;
 
 	frame = init_frame(vars, rays, dist);
-	draw_celling(&vars->pl_img, rays->num_r, frame->ofsset);
+	draw_celling(&vars->pl_img, rays->num_r, frame->ofsset, vars->parse.cell);
 	draw_wall(vars, rays, frame);
-	draw_floor(&vars->pl_img, rays->num_r, frame->ofsset + frame->lineH);
+	draw_floor(&vars->pl_img, rays->num_r, frame->ofsset + frame->lineH, vars->parse.floor);
 	free(frame);
 }
 
@@ -303,6 +305,27 @@ void	drawmap(void *mlx, void *win, t_vars *vars)
 	mlx_put_image_to_window(mlx, win, vars->pl_img.img, 0, 0);
 }
 
+int	mouse_hook(int button, int x, int y, t_vars *vars)
+{
+	if (button == 1)
+	{
+		vars->player.pa -= 0.2;
+		if (vars->player.pa < 0)
+			vars->player.pa += PI * 2;
+		vars->player.pdx = cos(vars->player.pa) * 3;
+		vars->player.pdy = sin(vars->player.pa) * 3;
+	}
+	if (button == 2)
+	{
+		vars->player.pa += 0.2;
+		if (vars->player.pa > 2 * PI)
+			vars->player.pa -= 2 * PI;
+		vars->player.pdx = cos(vars->player.pa) * 3;
+		vars->player.pdy = sin(vars->player.pa) * 3;
+	}
+	return (0);
+}
+
 void	ft_swap(int *a, int *b)
 {
 	int	tmp;
@@ -314,26 +337,34 @@ void	ft_swap(int *a, int *b)
 
 int	key_pressed(int keycode, t_vars *vars)
 {
-	if (keycode == arrow_down)
+	if (keycode == arrow_down || keycode == 1)
 		vars->player.down = 1;
-	if (keycode == arrow_up)
+	if (keycode == arrow_up || keycode == 13)
 		vars->player.up = 1;
 	if (keycode == arrow_left)
-		vars->player.left = 1;
+		vars->player.aleft = 1;
 	if (keycode == arrow_right)
+		vars->player.aright = 1;
+	if (keycode == 0)
+		vars->player.left = 1;
+	if (keycode == 2)
 		vars->player.right = 1;
 	return (keycode);
 }
 
 int	key_release(int keycode, t_vars *vars)
 {
-	if (keycode == arrow_down)
+	if (keycode == arrow_down || keycode == 1)
 		vars->player.down = 0;
-	if (keycode == arrow_up)
+	if (keycode == arrow_up || keycode == 13)
 		vars->player.up = 0;
 	if (keycode == arrow_left)
-		vars->player.left = 0;
+		vars->player.aleft = 0;
 	if (keycode == arrow_right)
+		vars->player.aright = 0;
+	if (keycode == 0)
+		vars->player.left = 0;
+	if (keycode == 2)
 		vars->player.right = 0;
 	if (keycode == 53)
 		exit(0);
@@ -358,9 +389,9 @@ void	move_up_down(t_player *player, t_parse parse, int xo, int yo)
 	}
 }
 
-void	move_left_right(t_player *player, int xo, int yo)
+void	move_angle_left_right(t_player *player, int xo, int yo)
 {
-	if (player->left)
+	if (player->aleft)
 	{
 		player->pa -= 0.05;
 		if (player->pa < 0)
@@ -368,13 +399,102 @@ void	move_left_right(t_player *player, int xo, int yo)
 		player->pdx = cos(player->pa) * 3;
 		player->pdy = sin(player->pa) * 3;
 	}
-	if (player->right)
+	if (player->aright)
 	{
 		player->pa += 0.05;
 		if (player->pa > 2 * PI)
 			player->pa -= 2 * PI;
 		player->pdx = cos(player->pa) * 3;
 		player->pdy = sin(player->pa) * 3;
+	}
+}
+
+double	norm_angle(double angle)
+{
+	angle = remainder(angle, 2 * M_PI);
+	if (angle < 0)
+		angle += 2 * M_PI;
+	return (angle);
+}
+
+int	wall(t_vars *vars, double x, double y, int flag)
+{
+	int	i;
+	int	j;
+
+	i = floor((y) / 64);
+	j = floor((x) / 64);
+	if (flag)
+	{
+		if (wall(vars, x, vars->player.py, 0) == 1)
+			return (1);
+		if (wall(vars, vars->player.px, y, 0) == 1)
+			return (1);
+	}
+	return (vars->parse.map[(int)i][(int)j]);
+}
+
+
+void	move_left_right(t_vars *vars, int xo, int yo)
+{
+	// int		xo1;
+	// int		yo1;
+
+	// if (cos(norm_angle(player->pa - M_PI_2)) < 0)
+	// 	xo1 = -15;
+	// else
+	// 	xo1 = 15;
+	// if (sin(norm_angle(player->pa - M_PI_2)) < 0)
+	// 	yo1 = -15;
+	// else
+	// 	yo1 = 15;
+	// if (player->left)
+	// {
+	// 	if (parse.map[(int)(player->py + yo1) / 64][(int)player->px / 64] == 0 && parse.map[(int)player->py / 64][(int)(player->px + xo1) / 64] == 0)
+	// 	{
+	// 		player->py += 3 * sin(norm_angle(player->pa - M_PI_2));
+	// 		player->px += 3 * cos(norm_angle(player->pa - M_PI_2));
+	// 	}
+	// }
+	// if (cos(norm_angle(player->pa + M_PI_2)) < 0)
+	// 	xo1 = -10;
+	// else
+	// 	xo1 = 10;
+	// if (sin(norm_angle(player->pa + M_PI_2)) < 0)
+	// 	yo1 = -10;
+	// else
+	// 	yo1 = 10;
+	// if (player->right)
+	// {
+	// 	if (parse.map[(int)(player->py - yo1) / 64][(int)player->px / 64] == 0 && parse.map[(int)player->py / 64][(int)(player->px - xo1) / 64] == 0)
+	// 	{
+	// 		player->py += 3 * sin(norm_angle(player->pa + M_PI_2));
+	// 		player->px += 3 * cos(norm_angle(player->pa + M_PI_2));
+	// 	}
+	// }
+	
+	double	new_x;
+	double	new_y;
+
+	if (vars->player.right)
+	{
+		new_x = vars->player.px + 3 * cos(norm_angle(vars->player.pa + M_PI_2));
+		new_y = vars->player.py + 3 * sin(norm_angle(vars->player.pa + M_PI_2));
+		if (wall(vars, new_x, new_y, 1) != 1)
+		{
+			vars->player.px = new_x;
+			vars->player.py = new_y;
+		}
+	}
+	if (vars->player.left)
+	{
+		new_x = vars->player.px + 3 * cos(norm_angle(vars->player.pa - M_PI_2));
+		new_y = vars->player.py + 3 * sin(norm_angle(vars->player.pa - M_PI_2));
+		if (wall(vars, new_x, new_y, 1) != 1)
+		{
+			vars->player.px = new_x;
+			vars->player.py = new_y;
+		}
 	}
 }
 
@@ -394,7 +514,8 @@ void	move(t_vars *vars)
 	else
 		yo = 10;
 	move_up_down(&vars->player, vars->parse, xo, yo);
-	move_left_right(&vars->player, xo, yo);
+	move_angle_left_right(&vars->player, xo, yo);
+	move_left_right(vars, xo, yo);
 }
 
 int	render_next_frame(t_vars *vars)
@@ -415,6 +536,7 @@ int	update(t_vars *vars)
 	mlx_hook(vars->win, 2, 1L << 0, key_pressed, vars);
 	mlx_hook(vars->win, 3, 1L << 1, key_release, vars);
 	mlx_hook(vars->win, 17, 0L, xclose, vars);
+	mlx_mouse_hook(vars->win, mouse_hook, vars);
 	move(vars);
 	render_next_frame(vars);
 	return (1);
